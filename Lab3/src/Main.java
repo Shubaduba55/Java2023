@@ -16,29 +16,61 @@
  * */
 
 
-
+import java.io.FileNotFoundException;
 import java.util.Scanner;
+import java.util.ArrayList;
+
+// For reading from .txt
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 
 public class Main {
-    static public void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        StringBuffer text = new StringBuffer(scanner.nextLine());
+    static public void main(String[] args) throws IOException {
+//        Scanner scanner = new Scanner(System.in);
+//        StringBuffer text = new StringBuffer(scanner.next());
 
-        char[] sentenceChars = {'!', '.', '?'};
+        String textInputPath = "Text.txt";
+        StringBuffer text = new StringBuffer();
+        BufferedReader reader = new BufferedReader(new FileReader(textInputPath));
+        String line;
 
-        StringBuffer[] sentences = mySplit(text, sentenceChars);
+        while ((line = reader.readLine()) != null) {
+            text.append(line);
+        }
 
         System.out.println(text);
 
-        for (StringBuffer sentence : sentences){
-            System.out.println(sentence);
-            char[] wordChars = {' '};
-            StringBuffer[] splitSentence = mySplit(sentence, wordChars);
-            for (StringBuffer word : splitSentence){
-                System.out.println(word);
-            }
+//      Init splitters
+        char[] sentenceChars = new char[]{'.', '!', '?'};
+        char[] wordChars = {' '};
 
+//      Split text into sentences
+        StringBuffer[] fullSentences = mySplit(text, sentenceChars);
+
+//      Array to store text: sentence by row, word by column
+
+        ArrayList<StringBuffer>[] splitSentences = new ArrayList[fullSentences.length];
+        for (int i = 0; i < splitSentences.length; i++) {
+            splitSentences[i] = new ArrayList<>();
         }
+
+        StringBuffer[] words;
+
+        for (int i = 0; i < fullSentences.length; i++){
+            words = mySplit(fullSentences[i], wordChars);
+
+            for (StringBuffer w : words)
+                splitSentences[i].add(w);
+        }
+
+//      Print text from ArrayList
+        for (int i = 0; i < fullSentences.length; i++){
+            for (StringBuffer w : splitSentences[i])
+                System.out.print(w + " ");
+            System.out.println();
+        }
+
     }
 
     static boolean isContained(char[] characters, char character)
@@ -57,22 +89,27 @@ public class Main {
 
     static int countSplitElements(StringBuffer input, char[] splitChars) {
         int count = 0;
-        for (int i = 0; i < input.length(); i++) {
-            if (isContained(splitChars, input.charAt(i)))
+        boolean isLast;
+        boolean isFirst;
+        int length = input.length();
+
+        // TODO: Rework IsFirst
+        for (int i = 0; i < length; i++) {
+            isLast = i+1 == length;
+            isFirst = i == 0;
+            // We don't want to add the split at the end of the sequence,
+            // because we will count it anyway.
+
+            if (isContained(splitChars, input.charAt(i)) && !isLast && !isFirst)
                 count++;
         }
-        return count;
-    }
 
-    static void copyStringBuffer(StringBuffer dest, StringBuffer source){
-        if (dest != null) dest.setLength(0);
-
-        for(int i = 0; i < source.length(); i++){
-            dest.append(source.charAt(i));
-        }
+        // The number of splits is less than the amount of actual splitting parts.
+        return count + 1;
     }
 
     static StringBuffer[] mySplit(StringBuffer input, char[] splitChars) {
+
         int splitNumber = countSplitElements(input, splitChars);
 
         StringBuffer[] result = new StringBuffer[splitNumber];
@@ -80,21 +117,24 @@ public class Main {
 
         StringBuffer element = new StringBuffer();
         char character;
+        boolean isLast;
+        int length = input.length();
 
-
-        for (int i = 0; i < input.length(); i++){
+        for (int i = 0; i < length; i++){
             character = input.charAt(i);
+            isLast = i+1 == length;
 
-
-            //  || input.charAt(i+1) == '\0'
             if (!isContained(splitChars, character)){
                 element.append(character);
-            } else {
-                // copyStringBuffer(result[nextElementId], element);
 
-                result[nextElementId] = new StringBuffer();
-                result[nextElementId].append(element);
+                // Skip split if not last
+                if(!isLast){
+                    continue;
+                }
+            }
 
+            if (!element.isEmpty()){
+                result[nextElementId] = new StringBuffer(element);
                 nextElementId++;
                 // Make our element empty
                 element.setLength(0);
@@ -103,6 +143,4 @@ public class Main {
 
         return result;
     }
-
-
 }
